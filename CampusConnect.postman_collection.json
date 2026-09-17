@@ -1,0 +1,134 @@
+{
+	"info": {
+		"_postman_id": "c1f7a049-8b89-4917-a50e-campusconnect",
+		"name": "CampusConnect - College Event Management REST API",
+		"description": "Complete Postman collection for CampusConnect Django REST Framework API testing including Authentication, Events CRUD, Registrations, Students, Categories, Venues, and Feedback endpoints.",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "Authentication",
+			"item": [
+				{
+					"name": "Register Student",
+					"request": {
+						"method": "POST",
+						"header": [
+							{ "key": "Content-Type", "value": "application/json" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"Alex Rivera\",\n  \"email\": \"alex.rivera@campusconnect.edu\",\n  \"register_number\": \"CS2026-0892\",\n  \"phone\": \"+1 (555) 342-9012\",\n  \"department\": \"Computer Science & Engineering\",\n  \"year\": \"3rd Year\",\n  \"password\": \"Student@123\",\n  \"confirm_password\": \"Student@123\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/auth/register/",
+							"host": ["{{base_url}}"],
+							"path": ["auth", "register", ""]
+						}
+					}
+				},
+				{
+					"name": "Login (Obtain JWT Pair)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{ "key": "Content-Type", "value": "application/json" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"email\": \"admin@campusconnect.edu\",\n  \"password\": \"Admin@123\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/auth/login/",
+							"host": ["{{base_url}}"],
+							"path": ["auth", "login", ""]
+						}
+					}
+				},
+				{
+					"name": "Refresh Token",
+					"request": {
+						"method": "POST",
+						"header": [
+							{ "key": "Content-Type", "value": "application/json" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"refresh\": \"{{refresh_token}}\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/auth/refresh/",
+							"host": ["{{base_url}}"],
+							"path": ["auth", "refresh", ""]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "Events",
+			"item": [
+				{
+					"name": "Get All Events",
+					"request": {
+						"method": "GET",
+						"url": {
+							"raw": "{{base_url}}/events/?status=Published",
+							"host": ["{{base_url}}"],
+							"path": ["events", ""],
+							"query": [{ "key": "status", "value": "Published" }]
+						}
+					}
+				},
+				{
+					"name": "Create Event (Admin Only)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{ "key": "Authorization", "value": "Bearer {{access_token}}" },
+							{ "key": "Content-Type", "value": "application/json" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"event_name\": \"AI Innovation Hackathon 2026\",\n  \"description\": \"24-hour product build sprint focusing on generative AI applications.\",\n  \"category_id\": 1,\n  \"date\": \"2026-10-15\",\n  \"start_time\": \"09:00:00\",\n  \"end_time\": \"18:00:00\",\n  \"venue_id\": 1,\n  \"organizer\": \"ACM Chapter\",\n  \"max_participants\": 100,\n  \"registration_deadline\": \"2026-10-14T23:59:00Z\",\n  \"status\": \"Published\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/events/",
+							"host": ["{{base_url}}"],
+							"path": ["events", ""]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "Registrations",
+			"item": [
+				{
+					"name": "Register for Event",
+					"request": {
+						"method": "POST",
+						"header": [
+							{ "key": "Authorization", "value": "Bearer {{access_token}}" },
+							{ "key": "Content-Type", "value": "application/json" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"event_id\": 1\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/registrations/",
+							"host": ["{{base_url}}"],
+							"path": ["registrations", ""]
+						}
+					}
+				}
+			]
+		}
+	],
+	"variable": [
+		{ "key": "base_url", "value": "http://127.0.0.1:8000/api" },
+		{ "key": "access_token", "value": "" },
+		{ "key": "refresh_token", "value": "" }
+	]
+}

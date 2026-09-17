@@ -1,0 +1,1664 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CampusConnect – College Event Management System</title>
+  <meta name="description" content="One platform to discover college events, register instantly, and stay connected with campus activities.">
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              50: '#ecfdf5',
+              100: '#d1fae5',
+              200: '#a7f3d0',
+              300: '#6ee7b7',
+              400: '#34d399',
+              500: '#10b981',
+              600: '#059669',
+              700: '#047857',
+              800: '#065f46',
+              900: '#064e3b',
+            }
+          },
+          fontFamily: {
+            sans: ['Inter', 'system-ui', 'sans-serif']
+          }
+        }
+      }
+    }
+  </script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <!-- React & React DOM -->
+  <script src="https://unpkg.com/react@18/umd/react.development.js" crossorigin></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js" crossorigin></script>
+  <!-- Babel Compiler -->
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <style>
+    body { font-family: 'Inter', sans-serif; background-color: #f8fafc; color: #1e293b; }
+    .custom-scrollbar::-webkit-scrollbar { width: 5px; height: 5px; }
+    .custom-scrollbar::-webkit-scrollbar-track { background: #f1f5f9; }
+    .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+
+  <script type="text/babel">
+    const { useState, useEffect, useMemo } = React;
+
+    // --- MOCK DATABASE STATE ---
+    const INITIAL_CATEGORIES = [
+      { id: 1, name: "Technical", description: "Coding contests, tech symposiums, and engineering expos" },
+      { id: 2, name: "Workshop", description: "Hands-on learning sessions led by domain experts" },
+      { id: 3, name: "Cultural", description: "Music festivals, dance competitions, and theatrical performances" },
+      { id: 4, name: "Sports", description: "Inter-departmental and intra-college athletic tournaments" },
+      { id: 5, name: "Symposium", description: "Research paper presentations and academic discussions" },
+      { id: 6, name: "Hackathon", description: "Intensive multi-hour product building sprints" }
+    ];
+
+    const INITIAL_VENUES = [
+      { id: 1, name: "Main Auditorium", location: "Block A, Central Campus", capacity: 800, availability: true },
+      { id: 2, name: "Turing Computer Lab", location: "Block C, 3rd Floor", capacity: 120, availability: true },
+      { id: 3, name: "Mini Seminar Hall 1", location: "Library Building, 2nd Floor", capacity: 250, availability: true },
+      { id: 4, name: "Campus Sports Complex", location: "West Grounds", capacity: 1500, availability: true },
+      { id: 5, name: "Innovation Hub", location: "Block D, Ground Floor", capacity: 80, availability: false }
+    ];
+
+    const INITIAL_EVENTS = [
+      {
+        id: 101,
+        event_name: "AI & Deep Learning Hackathon 2026",
+        description: "A 24-hour intensive product build sprint focusing on generative AI, computer vision, and healthcare applications. Free mentorship, high-speed WiFi, and cash prizes worth $2,500!",
+        category_id: 6,
+        date: "2026-10-15",
+        start_time: "09:00",
+        end_time: "18:00",
+        venue_id: 2,
+        organizer: "ACM Student Chapter",
+        max_participants: 100,
+        registration_deadline: "2026-10-14T23:59",
+        poster: "https://images.unsplash.com/photo-1504384308090-c894fdcc538d?auto=format&fit=crop&w=1200&q=80",
+        status: "Published"
+      },
+      {
+        id: 102,
+        event_name: "Annual Inter-College Cultural Fest 'Resonance'",
+        description: "Join us for 3 days of music, dance, battle of the bands, drama, and street food stalls featuring headlining performances by national indie bands.",
+        category_id: 3,
+        date: "2026-11-02",
+        start_time: "10:00",
+        end_time: "21:00",
+        venue_id: 1,
+        organizer: "Campus Cultural Council",
+        max_participants: 800,
+        registration_deadline: "2026-10-30T23:59",
+        poster: "https://images.unsplash.com/photo-1514525253161-7a46d19cd819?auto=format&fit=crop&w=1200&q=80",
+        status: "Published"
+      },
+      {
+        id: 103,
+        event_name: "Cybersecurity & Ethical Hacking Masterclass",
+        description: "Learn defensive cybersecurity, vulnerability research, network penetration testing basics, and CTF strategy from certified security analysts.",
+        category_id: 2,
+        date: "2026-09-28",
+        start_time: "14:00",
+        end_time: "17:00",
+        venue_id: 3,
+        organizer: "CyberSec Club",
+        max_participants: 200,
+        registration_deadline: "2026-09-27T23:59",
+        poster: "https://images.unsplash.com/photo-1550751827-4bd374c3f58b?auto=format&fit=crop&w=1200&q=80",
+        status: "Published"
+      },
+      {
+        id: 104,
+        event_name: "Inter-Department Athletics Tournament",
+        description: "Track & field events, 100m sprint, relay, long jump, and football championship match between student department teams.",
+        category_id: 4,
+        date: "2026-10-20",
+        start_time: "08:00",
+        end_time: "16:00",
+        venue_id: 4,
+        organizer: "Department of Physical Education",
+        max_participants: 500,
+        registration_deadline: "2026-10-18T23:59",
+        poster: "https://images.unsplash.com/photo-1461896836934-ffe607ba8211?auto=format&fit=crop&w=1200&q=80",
+        status: "Published"
+      },
+      {
+        id: 105,
+        event_name: "National Student Research Paper Symposium",
+        description: "Present your undergraduate research papers in Computer Science, Renewable Energy, Robotics, and Biotechnology. Peer-reviewed publication opportunity.",
+        category_id: 5,
+        date: "2026-11-15",
+        start_time: "09:30",
+        end_time: "16:30",
+        venue_id: 3,
+        organizer: "Research & Development Cell",
+        max_participants: 150,
+        registration_deadline: "2026-11-10T23:59",
+        poster: "https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?auto=format&fit=crop&w=1200&q=80",
+        status: "Draft"
+      }
+    ];
+
+    const INITIAL_STUDENTS = [
+      { id: 201, name: "Alex Rivera", register_number: "CS2026-0892", email: "alex.rivera@campusconnect.edu", phone: "+1 (555) 342-9012", department: "Computer Science", year: "3rd Year", status: "Active" },
+      { id: 202, name: "Emily Chen", register_number: "EC2026-0412", email: "emily.chen@campusconnect.edu", phone: "+1 (555) 489-1029", department: "Electronics", year: "2nd Year", status: "Active" },
+      { id: 203, name: "Marcus Vance", register_number: "ME2026-0118", email: "marcus.vance@campusconnect.edu", phone: "+1 (555) 782-3341", department: "Mechanical", year: "4th Year", status: "Active" }
+    ];
+
+    const INITIAL_REGISTRATIONS = [
+      { id: 301, user_id: 201, user_name: "Alex Rivera", register_number: "CS2026-0892", email: "alex.rivera@campusconnect.edu", department: "Computer Science", event_id: 101, event_name: "AI & Deep Learning Hackathon 2026", registration_date: "2026-09-15 10:30", status: "Approved" },
+      { id: 302, user_id: 201, user_name: "Alex Rivera", register_number: "CS2026-0892", email: "alex.rivera@campusconnect.edu", department: "Computer Science", event_id: 102, event_name: "Annual Inter-College Cultural Fest 'Resonance'", registration_date: "2026-09-16 14:20", status: "Registered" },
+      { id: 303, user_id: 202, user_name: "Emily Chen", register_number: "EC2026-0412", email: "emily.chen@campusconnect.edu", department: "Electronics", event_id: 101, event_name: "AI & Deep Learning Hackathon 2026", registration_date: "2026-09-16 16:45", status: "Pending" },
+      { id: 304, user_id: 203, user_name: "Marcus Vance", register_number: "ME2026-0118", email: "marcus.vance@campusconnect.edu", department: "Mechanical", event_id: 103, event_name: "Cybersecurity & Ethical Hacking Masterclass", registration_date: "2026-09-17 09:15", status: "Registered" }
+    ];
+
+    const INITIAL_FEEDBACK = [
+      { id: 401, user_id: 201, user_name: "Alex Rivera", event_id: 101, event_name: "AI & Deep Learning Hackathon 2026", rating: 5, comment: "Outstanding hackathon setup and mentors! Learned a lot about LLM fine-tuning.", date: "2026-09-16" },
+      { id: 402, user_id: 203, user_name: "Marcus Vance", event_id: 103, event_name: "Cybersecurity & Ethical Hacking Masterclass", rating: 4, comment: "Great introductory session on network security tools.", date: "2026-09-17" }
+    ];
+
+    // --- MAIN APP COMPONENT ---
+    function App() {
+      // Auth State
+      const [currentUser, setCurrentUser] = useState(() => {
+        const saved = localStorage.getItem('cc_current_user');
+        return saved ? JSON.parse(saved) : null; // null = unauthenticated, or user object
+      });
+
+      // DB Stores
+      const [events, setEvents] = useState(() => {
+        const s = localStorage.getItem('cc_events');
+        return s ? JSON.parse(s) : INITIAL_EVENTS;
+      });
+      const [categories, setCategories] = useState(() => {
+        const s = localStorage.getItem('cc_categories');
+        return s ? JSON.parse(s) : INITIAL_CATEGORIES;
+      });
+      const [venues, setVenues] = useState(() => {
+        const s = localStorage.getItem('cc_venues');
+        return s ? JSON.parse(s) : INITIAL_VENUES;
+      });
+      const [students, setStudents] = useState(() => {
+        const s = localStorage.getItem('cc_students');
+        return s ? JSON.parse(s) : INITIAL_STUDENTS;
+      });
+      const [registrations, setRegistrations] = useState(() => {
+        const s = localStorage.getItem('cc_registrations');
+        return s ? JSON.parse(s) : INITIAL_REGISTRATIONS;
+      });
+      const [feedbacks, setFeedbacks] = useState(() => {
+        const s = localStorage.getItem('cc_feedbacks');
+        return s ? JSON.parse(s) : INITIAL_FEEDBACK;
+      });
+
+      // Navigation & Modals
+      const [currentPage, setCurrentPage] = useState('landing'); // landing, login, register, student-dashboard, browse-events, event-details, my-registrations, calendar, feedback, profile, admin-dashboard, admin-events, admin-registrations, admin-students, admin-categories, admin-venues, admin-feedback
+      const [selectedEventId, setSelectedEventId] = useState(null);
+      const [toast, setToast] = useState(null);
+      const [confirmModal, setConfirmModal] = useState(null); // { title, message, onConfirm }
+
+      // Persist state changes
+      useEffect(() => { localStorage.setItem('cc_events', JSON.stringify(events)); }, [events]);
+      useEffect(() => { localStorage.setItem('cc_categories', JSON.stringify(categories)); }, [categories]);
+      useEffect(() => { localStorage.setItem('cc_venues', JSON.stringify(venues)); }, [venues]);
+      useEffect(() => { localStorage.setItem('cc_students', JSON.stringify(students)); }, [students]);
+      useEffect(() => { localStorage.setItem('cc_registrations', JSON.stringify(registrations)); }, [registrations]);
+      useEffect(() => { localStorage.setItem('cc_feedbacks', JSON.stringify(feedbacks)); }, [feedbacks]);
+      useEffect(() => { localStorage.setItem('cc_current_user', JSON.stringify(currentUser)); }, [currentUser]);
+
+      // Refresh icons on state change
+      useEffect(() => {
+        if (window.lucide) window.lucide.createIcons();
+      });
+
+      const showToast = (message, type = 'success') => {
+        setToast({ message, type });
+        setTimeout(() => setToast(null), 4000);
+      };
+
+      // Auth actions
+      const handleLogin = (userObj) => {
+        setCurrentUser(userObj);
+        showToast(`Welcome back, ${userObj.name}!`, 'success');
+        if (userObj.role === 'ADMIN') setCurrentPage('admin-dashboard');
+        else setCurrentPage('student-dashboard');
+      };
+
+      const handleLogout = () => {
+        setCurrentUser(null);
+        setCurrentPage('landing');
+        showToast('Logged out successfully', 'info');
+      };
+
+      // Navigation handler
+      const navigateTo = (page, eventId = null) => {
+        if (eventId) setSelectedEventId(eventId);
+        setCurrentPage(page);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      };
+
+      // Quick Role Swapper for Demo
+      const switchDemoUser = (role) => {
+        if (role === 'ADMIN') {
+          handleLogin({
+            id: 1,
+            name: "Dr. Sarah Jenkins",
+            email: "admin@campusconnect.edu",
+            role: "ADMIN",
+            department: "Dean of Student Affairs",
+            year: "Faculty"
+          });
+        } else {
+          handleLogin(students[0]);
+        }
+      };
+
+      return (
+        <div className="min-h-screen flex flex-col bg-slate-50 text-slate-800 font-sans">
+          {/* Top Demo Bar */}
+          <div className="bg-slate-900 text-slate-300 text-xs py-1.5 px-4 flex flex-wrap items-center justify-between border-b border-slate-800">
+            <div className="flex items-center space-x-2">
+              <span className="inline-block w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+              <span className="font-medium text-white">CampusConnect Academic SOP Demo Environment</span>
+              <span className="hidden md:inline text-slate-400">| Full-Stack Architecture Ready</span>
+            </div>
+            <div className="flex items-center space-x-3 mt-1 sm:mt-0">
+              <span className="text-slate-400 font-medium">Quick Switch:</span>
+              <button onClick={() => switchDemoUser('ADMIN')} className="px-2 py-0.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded font-medium transition">
+                Admin Role
+              </button>
+              <button onClick={() => switchDemoUser('STUDENT')} className="px-2 py-0.5 bg-slate-700 hover:bg-slate-600 text-white rounded font-medium transition">
+                Student Role
+              </button>
+            </div>
+          </div>
+
+          {/* Navigation Header */}
+          <header className="bg-white border-b border-slate-200 sticky top-0 z-30 shadow-sm">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+              <div className="flex items-center space-x-3 cursor-pointer" onClick={() => navigateTo(currentUser ? (currentUser.role === 'ADMIN' ? 'admin-dashboard' : 'student-dashboard') : 'landing')}>
+                <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-emerald-600 to-teal-500 flex items-center justify-center text-white font-bold shadow-md shadow-emerald-500/20">
+                  <i data-lucide="graduation-cap" className="w-6 h-6"></i>
+                </div>
+                <div>
+                  <span className="text-xl font-bold bg-gradient-to-r from-slate-900 to-slate-700 bg-clip-text text-transparent">CampusConnect</span>
+                  <span className="block text-[10px] tracking-wider uppercase font-semibold text-emerald-600">College Event Portal</span>
+                </div>
+              </div>
+
+              {/* Header Right */}
+              <div className="flex items-center space-x-4">
+                {currentUser ? (
+                  <div className="flex items-center space-x-3">
+                    <span className="hidden sm:inline-block px-2.5 py-1 text-xs font-semibold rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
+                      {currentUser.role}
+                    </span>
+                    <div className="text-right hidden sm:block">
+                      <div className="text-sm font-semibold text-slate-900">{currentUser.name}</div>
+                      <div className="text-xs text-slate-500">{currentUser.email}</div>
+                    </div>
+                    <button 
+                      onClick={() => navigateTo(currentUser.role === 'ADMIN' ? 'admin-dashboard' : 'student-dashboard')}
+                      className="px-3 py-1.5 text-xs font-medium text-slate-700 hover:text-emerald-600 bg-slate-100 hover:bg-emerald-50 rounded-lg transition"
+                    >
+                      Dashboard
+                    </button>
+                    <button 
+                      onClick={handleLogout}
+                      className="px-3 py-1.5 text-xs font-medium text-red-600 hover:bg-red-50 rounded-lg transition"
+                    >
+                      Logout
+                    </button>
+                  </div>
+                ) : (
+                  <div className="flex items-center space-x-2">
+                    <button onClick={() => navigateTo('browse-events')} className="px-3 py-2 text-sm font-medium text-slate-600 hover:text-emerald-600 transition">
+                      Explore Events
+                    </button>
+                    <button onClick={() => navigateTo('login')} className="px-4 py-2 text-sm font-medium text-slate-700 hover:text-emerald-600 transition">
+                      Login
+                    </button>
+                    <button onClick={() => navigateTo('register')} className="px-4 py-2 text-sm font-medium bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg shadow-sm shadow-emerald-600/30 transition">
+                      Register
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
+          </header>
+
+          {/* Toast Notification */}
+          {toast && (
+            <div className={`fixed bottom-5 right-5 z-50 px-4 py-3 rounded-xl shadow-lg border flex items-center space-x-3 transition-all transform animate-bounce ${
+              toast.type === 'error' ? 'bg-red-900 text-white border-red-700' : 
+              toast.type === 'info' ? 'bg-slate-800 text-white border-slate-700' :
+              'bg-emerald-800 text-white border-emerald-600'
+            }`}>
+              <i data-lucide={toast.type === 'error' ? 'alert-circle' : 'check-circle-2'} className="w-5 h-5"></i>
+              <span className="text-sm font-medium">{toast.message}</span>
+            </div>
+          )}
+
+          {/* Main Dynamic View */}
+          <main className="flex-1">
+            {currentPage === 'landing' && <LandingView navigateTo={navigateTo} events={events} categories={categories} />}
+            {currentPage === 'login' && <LoginView onLogin={handleLogin} navigateTo={navigateTo} showToast={showToast} />}
+            {currentPage === 'register' && <RegisterView setStudents={setStudents} navigateTo={navigateTo} showToast={showToast} />}
+            
+            {/* Student Views */}
+            {currentPage === 'student-dashboard' && <StudentDashboardView user={currentUser} events={events} registrations={registrations} navigateTo={navigateTo} />}
+            {currentPage === 'browse-events' && <BrowseEventsView events={events} categories={categories} venues={venues} registrations={registrations} currentUser={currentUser} navigateTo={navigateTo} setEvents={setEvents} setRegistrations={setRegistrations} showToast={showToast} />}
+            {currentPage === 'event-details' && <EventDetailsView eventId={selectedEventId} events={events} categories={categories} venues={venues} registrations={registrations} feedbacks={feedbacks} currentUser={currentUser} navigateTo={navigateTo} setRegistrations={setRegistrations} setFeedbacks={setFeedbacks} showToast={showToast} />}
+            {currentPage === 'my-registrations' && <MyRegistrationsView currentUser={currentUser} registrations={registrations} setRegistrations={setRegistrations} events={events} navigateTo={navigateTo} showToast={showToast} />}
+            {currentPage === 'calendar' && <StudentCalendarView events={events} registrations={registrations} currentUser={currentUser} navigateTo={navigateTo} />}
+            {currentPage === 'feedback' && <FeedbackView currentUser={currentUser} registrations={registrations} feedbacks={feedbacks} setFeedbacks={setFeedbacks} events={events} showToast={showToast} />}
+            {currentPage === 'profile' && <ProfileView currentUser={currentUser} setCurrentUser={setCurrentUser} showToast={showToast} />}
+
+            {/* Admin Views */}
+            {currentPage === 'admin-dashboard' && <AdminDashboardView events={events} registrations={registrations} students={students} categories={categories} navigateTo={navigateTo} setRegistrations={setRegistrations} showToast={showToast} />}
+            {currentPage === 'admin-events' && <AdminEventsView events={events} setEvents={setEvents} categories={categories} venues={venues} registrations={registrations} navigateTo={navigateTo} showToast={showToast} setConfirmModal={setConfirmModal} />}
+            {currentPage === 'admin-registrations' && <AdminRegistrationsView registrations={registrations} setRegistrations={setRegistrations} events={events} students={students} showToast={showToast} setConfirmModal={setConfirmModal} />}
+            {currentPage === 'admin-students' && <AdminStudentsView students={students} setStudents={setStudents} showToast={showToast} setConfirmModal={setConfirmModal} />}
+            {currentPage === 'admin-categories' && <AdminCategoriesView categories={categories} setCategories={setCategories} events={events} showToast={showToast} setConfirmModal={setConfirmModal} />}
+            {currentPage === 'admin-venues' && <AdminVenuesView venues={venues} setVenues={setVenues} events={events} showToast={showToast} setConfirmModal={setConfirmModal} />}
+            {currentPage === 'admin-feedback' && <AdminFeedbackView feedbacks={feedbacks} events={events} showToast={showToast} setConfirmModal={setConfirmModal} setFeedbacks={setFeedbacks} />}
+          </main>
+
+          {/* Confirmation Modal */}
+          {confirmModal && (
+            <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+              <div className="bg-white rounded-2xl p-6 max-w-md w-full shadow-2xl border border-slate-100 animate-in fade-in zoom-in duration-200">
+                <div className="w-12 h-12 rounded-full bg-red-100 text-red-600 flex items-center justify-center mx-auto mb-4">
+                  <i data-lucide="alert-triangle" className="w-6 h-6"></i>
+                </div>
+                <h3 className="text-lg font-bold text-center text-slate-900 mb-2">{confirmModal.title}</h3>
+                <p className="text-sm text-slate-600 text-center mb-6">{confirmModal.message}</p>
+                <div className="flex space-x-3">
+                  <button onClick={() => setConfirmModal(null)} className="flex-1 py-2.5 px-4 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-sm font-semibold transition">
+                    Cancel
+                  </button>
+                  <button onClick={() => { confirmModal.onConfirm(); setConfirmModal(null); }} className="flex-1 py-2.5 px-4 bg-red-600 hover:bg-red-700 text-white rounded-xl text-sm font-semibold transition shadow-md shadow-red-600/30">
+                    Confirm Delete
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Footer */}
+          <footer className="bg-slate-900 text-slate-400 border-t border-slate-800 py-12 mt-16">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-1 md:grid-cols-4 gap-8">
+              <div className="space-y-4">
+                <div className="flex items-center space-x-2">
+                  <div className="w-8 h-8 rounded-lg bg-emerald-500 flex items-center justify-center text-white font-bold">
+                    <i data-lucide="graduation-cap" className="w-5 h-5"></i>
+                  </div>
+                  <span className="text-lg font-bold text-white">CampusConnect</span>
+                </div>
+                <p className="text-sm text-slate-400 leading-relaxed">
+                  One platform to discover college events, register instantly, and stay connected with campus activities.
+                </p>
+              </div>
+              <div>
+                <h4 className="text-sm font-semibold text-white uppercase tracking-wider mb-4">Quick Links</h4>
+                <ul className="space-y-2 text-sm">
+                  <li><button onClick={() => navigateTo('browse-events')} className="hover:text-emerald-400 transition">Browse Events</button></li>
+                  <li><button onClick={() => navigateTo('login')} className="hover:text-emerald-400 transition">Student Login</button></li>
+                  <li><button onClick={() => navigateTo('register')} className="hover:text-emerald-400 transition">Registration</button></li>
+                </ul>
+              </div>
+              <div>
+                <h4 className="text-sm font-semibold text-white uppercase tracking-wider mb-4">Categories</h4>
+                <ul className="space-y-2 text-sm">
+                  <li className="hover:text-emerald-400 cursor-pointer">Technical & Hackathons</li>
+                  <li className="hover:text-emerald-400 cursor-pointer">Cultural Fests</li>
+                  <li className="hover:text-emerald-400 cursor-pointer">Sports Tournaments</li>
+                  <li className="hover:text-emerald-400 cursor-pointer">Workshops & Seminars</li>
+                </ul>
+              </div>
+              <div>
+                <h4 className="text-sm font-semibold text-white uppercase tracking-wider mb-4">Contact & Support</h4>
+                <p className="text-sm text-slate-400">Campus Events Office, Student Center, Block A</p>
+                <p className="text-sm text-slate-400 mt-2">Email: events@campusconnect.edu</p>
+                <p className="text-sm text-slate-400">Helpline: +1 (800) 555-0199</p>
+              </div>
+            </div>
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 mt-8 border-t border-slate-800 text-xs text-center text-slate-500">
+              © 2026 CampusConnect – College Event Management System. All rights reserved. Academic Project SOP Standard.
+            </div>
+          </footer>
+        </div>
+      );
+    }
+
+    // --- LANDING PAGE VIEW ---
+    function LandingView({ navigateTo, events, categories }) {
+      return (
+        <div>
+          {/* Hero Section */}
+          <section className="relative overflow-hidden bg-gradient-to-b from-emerald-50/70 via-white to-slate-50 py-20 lg:py-28 border-b border-slate-200/60">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center relative z-10">
+              <span className="inline-flex items-center space-x-2 px-3.5 py-1.5 rounded-full bg-emerald-100/80 text-emerald-800 text-xs font-semibold tracking-wide uppercase mb-6 border border-emerald-200">
+                <i data-lucide="sparkles" className="w-4 h-4 text-emerald-600"></i>
+                <span>Official Campus Events Portal</span>
+              </span>
+              <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold text-slate-900 tracking-tight max-w-4xl mx-auto leading-tight">
+                Discover. Register. <span className="bg-gradient-to-r from-emerald-600 to-teal-500 bg-clip-text text-transparent">Participate.</span>
+              </h1>
+              <p className="mt-6 text-lg sm:text-xl text-slate-600 max-w-2xl mx-auto leading-relaxed font-normal">
+                One platform to discover college events, register instantly, and stay connected with campus activities.
+              </p>
+              <div className="mt-8 flex flex-wrap items-center justify-center gap-4">
+                <button onClick={() => navigateTo('browse-events')} className="px-6 py-3.5 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-xl shadow-lg shadow-emerald-600/30 hover:shadow-xl transition-all flex items-center space-x-2">
+                  <span>Explore Events</span>
+                  <i data-lucide="arrow-right" className="w-5 h-5"></i>
+                </button>
+                <button onClick={() => navigateTo('login')} className="px-6 py-3.5 bg-white hover:bg-slate-50 text-slate-800 font-semibold rounded-xl border border-slate-200 shadow-sm transition-all">
+                  Student Login
+                </button>
+              </div>
+
+              {/* Platform Statistics */}
+              <div className="mt-16 grid grid-cols-2 md:grid-cols-4 gap-6 max-w-4xl mx-auto">
+                <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm">
+                  <div className="text-3xl font-extrabold text-emerald-600">50+</div>
+                  <div className="text-xs font-medium text-slate-500 uppercase mt-1">Annual Events</div>
+                </div>
+                <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm">
+                  <div className="text-3xl font-extrabold text-slate-900">4,500+</div>
+                  <div className="text-xs font-medium text-slate-500 uppercase mt-1">Active Students</div>
+                </div>
+                <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm">
+                  <div className="text-3xl font-extrabold text-emerald-600">12</div>
+                  <div className="text-xs font-medium text-slate-500 uppercase mt-1">Campus Venues</div>
+                </div>
+                <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm">
+                  <div className="text-3xl font-extrabold text-slate-900">98%</div>
+                  <div className="text-xs font-medium text-slate-500 uppercase mt-1">Satisfaction</div>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          {/* Featured Upcoming Events */}
+          <section className="py-16 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="flex flex-col md:flex-row md:items-end justify-between mb-10">
+              <div>
+                <h2 className="text-2xl font-bold text-slate-900">Featured Upcoming Events</h2>
+                <p className="text-sm text-slate-500 mt-1">Handpicked workshops, hackathons, and cultural fests happening soon.</p>
+              </div>
+              <button onClick={() => navigateTo('browse-events')} className="mt-4 md:mt-0 text-sm font-semibold text-emerald-600 hover:text-emerald-700 flex items-center space-x-1">
+                <span>View All Events</span>
+                <i data-lucide="arrow-right" className="w-4 h-4"></i>
+              </button>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              {events.slice(0, 3).map(ev => (
+                <div key={ev.id} className="bg-white rounded-2xl overflow-hidden border border-slate-200/80 shadow-sm hover:shadow-md transition group flex flex-col">
+                  <div className="relative h-48 overflow-hidden bg-slate-100">
+                    <img src={ev.poster} alt={ev.event_name} className="w-full h-full object-cover group-hover:scale-105 transition duration-300" />
+                    <span className="absolute top-3 right-3 px-3 py-1 bg-white/90 backdrop-blur-md text-emerald-700 text-xs font-bold rounded-full shadow-sm">
+                      {categories.find(c => c.id === ev.category_id)?.name || 'Event'}
+                    </span>
+                  </div>
+                  <div className="p-5 flex-1 flex flex-col justify-between space-y-4">
+                    <div>
+                      <h3 className="text-lg font-bold text-slate-900 group-hover:text-emerald-600 transition line-clamp-1">{ev.event_name}</h3>
+                      <p className="text-xs text-slate-500 mt-1 line-clamp-2">{ev.description}</p>
+                    </div>
+                    <div className="space-y-2 text-xs text-slate-600 border-t border-slate-100 pt-3">
+                      <div className="flex items-center space-x-2">
+                        <i data-lucide="calendar" className="w-4 h-4 text-emerald-600"></i>
+                        <span>{ev.date} at {ev.start_time}</span>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <i data-lucide="map-pin" className="w-4 h-4 text-emerald-600"></i>
+                        <span>{ev.organizer}</span>
+                      </div>
+                    </div>
+                    <button onClick={() => navigateTo('event-details', ev.id)} className="w-full py-2.5 bg-slate-900 hover:bg-emerald-600 text-white rounded-xl text-xs font-semibold transition">
+                      View Details & Register
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </section>
+
+          {/* How It Works */}
+          <section className="py-16 bg-slate-100/70 border-y border-slate-200">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+              <h2 className="text-2xl font-bold text-slate-900">How CampusConnect Works</h2>
+              <p className="text-sm text-slate-500 mt-1 max-w-xl mx-auto">Three simple steps to start participating in campus events.</p>
+
+              <div className="mt-12 grid grid-cols-1 md:grid-cols-3 gap-8">
+                <div className="bg-white p-8 rounded-2xl border border-slate-200 shadow-sm text-center">
+                  <div className="w-14 h-14 bg-emerald-100 text-emerald-600 rounded-2xl flex items-center justify-center mx-auto mb-4 font-bold text-xl">1</div>
+                  <h3 className="font-bold text-slate-900 mb-2">Create Student Account</h3>
+                  <p className="text-xs text-slate-500 leading-relaxed">Register with your college email, register number, and department details.</p>
+                </div>
+                <div className="bg-white p-8 rounded-2xl border border-slate-200 shadow-sm text-center">
+                  <div className="w-14 h-14 bg-emerald-100 text-emerald-600 rounded-2xl flex items-center justify-center mx-auto mb-4 font-bold text-xl">2</div>
+                  <h3 className="font-bold text-slate-900 mb-2">Browse & Register</h3>
+                  <p className="text-xs text-slate-500 leading-relaxed">Filter events by department or category, view schedules, and register in one click.</p>
+                </div>
+                <div className="bg-white p-8 rounded-2xl border border-slate-200 shadow-sm text-center">
+                  <div className="w-14 h-14 bg-emerald-100 text-emerald-600 rounded-2xl flex items-center justify-center mx-auto mb-4 font-bold text-xl">3</div>
+                  <h3 className="font-bold text-slate-900 mb-2">Attend & Provide Feedback</h3>
+                  <p className="text-xs text-slate-500 leading-relaxed">Check your registrations, attend the event, and submit ratings to campus organizers.</p>
+                </div>
+              </div>
+            </div>
+          </section>
+        </div>
+      );
+    }
+
+    // --- LOGIN VIEW ---
+    function LoginView({ onLogin, navigateTo, showToast }) {
+      const [email, setEmail] = useState('');
+      const [password, setPassword] = useState('');
+      const [showPassword, setShowPassword] = useState(false);
+      const [rememberMe, setRememberMe] = useState(false);
+
+      const handleSubmit = (e) => {
+        e.preventDefault();
+        if (!email || !password) {
+          showToast('Please enter both email and password.', 'error');
+          return;
+        }
+        if (email === 'admin@campusconnect.edu') {
+          onLogin({ id: 1, name: "Dr. Sarah Jenkins", email: "admin@campusconnect.edu", role: "ADMIN", department: "Dean of Student Affairs" });
+        } else {
+          onLogin({ id: 201, name: "Alex Rivera", register_number: "CS2026-0892", email: email, role: "STUDENT", department: "Computer Science", year: "3rd Year", phone: "+1 (555) 342-9012" });
+        }
+      };
+
+      return (
+        <div className="py-16 max-w-md mx-auto px-4">
+          <div className="bg-white p-8 rounded-2xl border border-slate-200 shadow-lg">
+            <div className="text-center mb-6">
+              <div className="w-12 h-12 rounded-2xl bg-emerald-100 text-emerald-600 flex items-center justify-center mx-auto mb-3">
+                <i data-lucide="lock" className="w-6 h-6"></i>
+              </div>
+              <h2 className="text-2xl font-bold text-slate-900">Welcome Back</h2>
+              <p className="text-xs text-slate-500 mt-1">Sign in to your CampusConnect account</p>
+            </div>
+
+            {/* Quick Fill Buttons for Demo */}
+            <div className="mb-6 p-3 bg-slate-50 rounded-xl border border-slate-200 text-xs space-y-2">
+              <span className="font-semibold text-slate-700 block">Quick Demo Login:</span>
+              <div className="flex space-x-2">
+                <button type="button" onClick={() => { setEmail('admin@campusconnect.edu'); setPassword('Admin@123'); }} className="flex-1 py-1.5 bg-emerald-50 text-emerald-700 font-medium rounded border border-emerald-200 hover:bg-emerald-100 transition">
+                  Fill Admin
+                </button>
+                <button type="button" onClick={() => { setEmail('alex.rivera@campusconnect.edu'); setPassword('Student@123'); }} className="flex-1 py-1.5 bg-slate-100 text-slate-700 font-medium rounded border border-slate-300 hover:bg-slate-200 transition">
+                  Fill Student
+                </button>
+              </div>
+            </div>
+
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">College Email Address</label>
+                <input 
+                  type="email" 
+                  value={email} 
+                  onChange={e => setEmail(e.target.value)}
+                  placeholder="student@campusconnect.edu"
+                  className="w-full px-3.5 py-2.5 border border-slate-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">Password</label>
+                <div className="relative">
+                  <input 
+                    type={showPassword ? "text" : "password"} 
+                    value={password} 
+                    onChange={e => setPassword(e.target.value)}
+                    placeholder="••••••••"
+                    className="w-full px-3.5 py-2.5 border border-slate-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 pr-10"
+                    required
+                  />
+                  <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-3 text-slate-400 hover:text-slate-600">
+                    <i data-lucide={showPassword ? "eye-off" : "eye"} className="w-4 h-4"></i>
+                  </button>
+                </div>
+              </div>
+
+              <div className="flex items-center justify-between text-xs">
+                <label className="flex items-center space-x-2 text-slate-600 cursor-pointer">
+                  <input type="checkbox" checked={rememberMe} onChange={e => setRememberMe(e.target.checked)} className="rounded border-slate-300 text-emerald-600 focus:ring-emerald-500" />
+                  <span>Remember me</span>
+                </label>
+                <a href="#" onClick={(e) => { e.preventDefault(); showToast('Password reset link sent to registered email.', 'info'); }} className="text-emerald-600 font-semibold hover:underline">Forgot Password?</a>
+              </div>
+
+              <button type="submit" className="w-full py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-xl text-sm shadow-md shadow-emerald-600/30 transition">
+                Sign In
+              </button>
+            </form>
+
+            <div className="mt-6 text-center text-xs text-slate-500">
+              Don't have an account?{' '}
+              <button onClick={() => navigateTo('register')} className="text-emerald-600 font-bold hover:underline">Register Now</button>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    // --- STUDENT REGISTER VIEW ---
+    function RegisterView({ setStudents, navigateTo, showToast }) {
+      const [formData, setFormData] = useState({
+        name: '',
+        register_number: '',
+        email: '',
+        phone: '',
+        department: 'Computer Science',
+        year: '1st Year',
+        password: '',
+        confirm_password: ''
+      });
+
+      const handleSubmit = (e) => {
+        e.preventDefault();
+        if (formData.password !== formData.confirm_password) {
+          showToast('Passwords do not match.', 'error');
+          return;
+        }
+        const newStudent = {
+          id: Date.now(),
+          ...formData,
+          status: 'Active'
+        };
+        setStudents(prev => [newStudent, ...prev]);
+        showToast('Registration successful! Please login with your credentials.', 'success');
+        navigateTo('login');
+      };
+
+      return (
+        <div className="py-12 max-w-xl mx-auto px-4">
+          <div className="bg-white p-8 rounded-2xl border border-slate-200 shadow-lg">
+            <h2 className="text-2xl font-bold text-slate-900 text-center mb-1">Student Registration</h2>
+            <p className="text-xs text-slate-500 text-center mb-6">Create your campus event participant account</p>
+
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">Full Name</label>
+                  <input type="text" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} required className="w-full px-3.5 py-2 border border-slate-300 rounded-xl text-sm focus:ring-2 focus:ring-emerald-500" placeholder="John Doe" />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">Register Number</label>
+                  <input type="text" value={formData.register_number} onChange={e => setFormData({...formData, register_number: e.target.value})} required className="w-full px-3.5 py-2 border border-slate-300 rounded-xl text-sm focus:ring-2 focus:ring-emerald-500" placeholder="CS2026-9901" />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">College Email</label>
+                  <input type="email" value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} required className="w-full px-3.5 py-2 border border-slate-300 rounded-xl text-sm focus:ring-2 focus:ring-emerald-500" placeholder="john@campusconnect.edu" />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">Phone Number</label>
+                  <input type="tel" value={formData.phone} onChange={e => setFormData({...formData, phone: e.target.value})} required className="w-full px-3.5 py-2 border border-slate-300 rounded-xl text-sm focus:ring-2 focus:ring-emerald-500" placeholder="+1 (555) 000-0000" />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">Department</label>
+                  <select value={formData.department} onChange={e => setFormData({...formData, department: e.target.value})} className="w-full px-3.5 py-2 border border-slate-300 rounded-xl text-sm focus:ring-2 focus:ring-emerald-500">
+                    <option>Computer Science</option>
+                    <option>Electronics</option>
+                    <option>Mechanical</option>
+                    <option>Civil Engineering</option>
+                    <option>Biotechnology</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">Year of Study</label>
+                  <select value={formData.year} onChange={e => setFormData({...formData, year: e.target.value})} className="w-full px-3.5 py-2 border border-slate-300 rounded-xl text-sm focus:ring-2 focus:ring-emerald-500">
+                    <option>1st Year</option>
+                    <option>2nd Year</option>
+                    <option>3rd Year</option>
+                    <option>4th Year</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">Password</label>
+                  <input type="password" value={formData.password} onChange={e => setFormData({...formData, password: e.target.value})} required className="w-full px-3.5 py-2 border border-slate-300 rounded-xl text-sm focus:ring-2 focus:ring-emerald-500" placeholder="••••••••" />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">Confirm Password</label>
+                  <input type="password" value={formData.confirm_password} onChange={e => setFormData({...formData, confirm_password: e.target.value})} required className="w-full px-3.5 py-2 border border-slate-300 rounded-xl text-sm focus:ring-2 focus:ring-emerald-500" placeholder="••••••••" />
+                </div>
+              </div>
+
+              <button type="submit" className="w-full py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-xl text-sm shadow-md transition mt-4">
+                Complete Registration
+              </button>
+            </form>
+          </div>
+        </div>
+      );
+    }
+
+    // --- STUDENT DASHBOARD VIEW ---
+    function StudentDashboardView({ user, events, registrations, navigateTo }) {
+      const myRegs = useMemo(() => registrations.filter(r => r.user_id === user?.id || r.email === user?.email), [registrations, user]);
+      const upcomingRegs = useMemo(() => myRegs.filter(r => r.status === 'Registered' || r.status === 'Approved'), [myRegs]);
+
+      return (
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 pb-4 border-b border-slate-200">
+            <div>
+              <h1 className="text-2xl font-bold text-slate-900">Welcome back, {user?.name || 'Student'}! 👋</h1>
+              <p className="text-sm text-slate-500 mt-0.5">{user?.department} • {user?.register_number || 'CS2026-0892'}</p>
+            </div>
+            <div className="mt-4 md:mt-0 flex space-x-3">
+              <button onClick={() => navigateTo('browse-events')} className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold rounded-xl transition flex items-center space-x-1.5">
+                <i data-lucide="compass" className="w-4 h-4"></i>
+                <span>Browse Events</span>
+              </button>
+              <button onClick={() => navigateTo('my-registrations')} className="px-4 py-2 bg-white border border-slate-300 text-slate-700 text-xs font-semibold rounded-xl transition">
+                My Registrations
+              </button>
+            </div>
+          </div>
+
+          {/* Student Stats Cards */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 mb-8">
+            <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex items-center space-x-4">
+              <div className="w-12 h-12 rounded-xl bg-emerald-100 text-emerald-600 flex items-center justify-center">
+                <i data-lucide="ticket" className="w-6 h-6"></i>
+              </div>
+              <div>
+                <div className="text-2xl font-extrabold text-slate-900">{myRegs.length}</div>
+                <div className="text-xs text-slate-500 font-medium uppercase">Total Registrations</div>
+              </div>
+            </div>
+            <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex items-center space-x-4">
+              <div className="w-12 h-12 rounded-xl bg-blue-100 text-blue-600 flex items-center justify-center">
+                <i data-lucide="calendar" className="w-6 h-6"></i>
+              </div>
+              <div>
+                <div className="text-2xl font-extrabold text-slate-900">{upcomingRegs.length}</div>
+                <div className="text-xs text-slate-500 font-medium uppercase">Upcoming Events</div>
+              </div>
+            </div>
+            <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex items-center space-x-4">
+              <div className="w-12 h-12 rounded-xl bg-purple-100 text-purple-600 flex items-center justify-center">
+                <i data-lucide="check-circle" className="w-6 h-6"></i>
+              </div>
+              <div>
+                <div className="text-2xl font-extrabold text-slate-900">{myRegs.filter(r => r.status === 'Completed').length}</div>
+                <div className="text-xs text-slate-500 font-medium uppercase">Completed Events</div>
+              </div>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            {/* Upcoming Registered Events */}
+            <div className="lg:col-span-2 space-y-4">
+              <div className="flex items-center justify-between">
+                <h3 className="text-lg font-bold text-slate-900">Your Upcoming Registered Events</h3>
+                <button onClick={() => navigateTo('calendar')} className="text-xs font-semibold text-emerald-600 hover:underline">View Calendar</button>
+              </div>
+
+              {upcomingRegs.length === 0 ? (
+                <div className="bg-white p-8 rounded-2xl border border-slate-200 text-center">
+                  <i data-lucide="calendar-x" className="w-10 h-10 text-slate-300 mx-auto mb-2"></i>
+                  <p className="text-sm font-semibold text-slate-700">No upcoming event registrations</p>
+                  <p className="text-xs text-slate-400 mt-1">Explore campus events and register to stay active.</p>
+                  <button onClick={() => navigateTo('browse-events')} className="mt-4 px-4 py-2 bg-emerald-600 text-white rounded-xl text-xs font-semibold">Explore Events Now</button>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {upcomingRegs.map(reg => {
+                    const ev = events.find(e => e.id === reg.event_id);
+                    if (!ev) return null;
+                    return (
+                      <div key={reg.id} className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex items-center justify-between">
+                        <div className="flex items-center space-x-4">
+                          <img src={ev.poster} className="w-16 h-16 rounded-lg object-cover" />
+                          <div>
+                            <h4 className="text-sm font-bold text-slate-900">{ev.event_name}</h4>
+                            <div className="text-xs text-slate-500 mt-0.5">{ev.date} at {ev.start_time}</div>
+                            <span className={`inline-block mt-1 px-2 py-0.5 text-[10px] font-bold rounded-full ${reg.status === 'Approved' ? 'bg-emerald-100 text-emerald-800' : 'bg-blue-100 text-blue-800'}`}>
+                              {reg.status}
+                            </span>
+                          </div>
+                        </div>
+                        <button onClick={() => navigateTo('event-details', ev.id)} className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-semibold">
+                          Details
+                        </button>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+
+            {/* Quick Actions & Recommended */}
+            <div className="space-y-6">
+              <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
+                <h3 className="text-sm font-bold text-slate-900 mb-3">Quick Navigation</h3>
+                <div className="space-y-2 text-xs">
+                  <button onClick={() => navigateTo('browse-events')} className="w-full p-2.5 rounded-xl bg-slate-50 hover:bg-emerald-50 text-slate-700 hover:text-emerald-700 font-medium text-left flex items-center space-x-2 transition">
+                    <i data-lucide="search" className="w-4 h-4"></i>
+                    <span>Search All Events</span>
+                  </button>
+                  <button onClick={() => navigateTo('calendar')} className="w-full p-2.5 rounded-xl bg-slate-50 hover:bg-emerald-50 text-slate-700 hover:text-emerald-700 font-medium text-left flex items-center space-x-2 transition">
+                    <i data-lucide="calendar" className="w-4 h-4"></i>
+                    <span>My Schedule Calendar</span>
+                  </button>
+                  <button onClick={() => navigateTo('feedback')} className="w-full p-2.5 rounded-xl bg-slate-50 hover:bg-emerald-50 text-slate-700 hover:text-emerald-700 font-medium text-left flex items-center space-x-2 transition">
+                    <i data-lucide="star" className="w-4 h-4"></i>
+                    <span>Submit Event Feedback</span>
+                  </button>
+                  <button onClick={() => navigateTo('profile')} className="w-full p-2.5 rounded-xl bg-slate-50 hover:bg-emerald-50 text-slate-700 hover:text-emerald-700 font-medium text-left flex items-center space-x-2 transition">
+                    <i data-lucide="user" className="w-4 h-4"></i>
+                    <span>View / Edit Profile</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    // --- BROWSE EVENTS VIEW ---
+    function BrowseEventsView({ events, categories, venues, registrations, currentUser, navigateTo, setRegistrations, showToast }) {
+      const [searchQuery, setSearchQuery] = useState('');
+      const [selectedCategory, setSelectedCategory] = useState('All');
+      const [selectedStatus, setSelectedStatus] = useState('All');
+
+      const filteredEvents = useMemo(() => {
+        return events.filter(ev => {
+          const matchSearch = ev.event_name.toLowerCase().includes(searchQuery.toLowerCase()) || ev.description.toLowerCase().includes(searchQuery.toLowerCase());
+          const matchCategory = selectedCategory === 'All' || ev.category_id === parseInt(selectedCategory);
+          const matchStatus = selectedStatus === 'All' || ev.status === selectedStatus;
+          return matchSearch && matchCategory && matchStatus;
+        });
+      }, [events, searchQuery, selectedCategory, selectedStatus]);
+
+      return (
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <div className="mb-6">
+            <h1 className="text-2xl font-bold text-slate-900">Explore Campus Events</h1>
+            <p className="text-sm text-slate-500">Discover upcoming workshops, technical hackathons, cultural fests, and sports matches.</p>
+          </div>
+
+          {/* Search & Filter Bar */}
+          <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm mb-8 flex flex-col md:flex-row gap-4">
+            <div className="flex-1 relative">
+              <i data-lucide="search" className="w-4 h-4 text-slate-400 absolute left-3.5 top-3.5"></i>
+              <input 
+                type="text" 
+                placeholder="Search events by name or topic..."
+                value={searchQuery}
+                onChange={e => setSearchQuery(e.target.value)}
+                className="w-full pl-10 pr-4 py-2.5 border border-slate-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+              />
+            </div>
+            <div className="flex gap-3">
+              <select value={selectedCategory} onChange={e => setSelectedCategory(e.target.value)} className="px-3 py-2.5 border border-slate-300 rounded-xl text-sm bg-white">
+                <option value="All">All Categories</option>
+                {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+              </select>
+              <select value={selectedStatus} onChange={e => setSelectedStatus(e.target.value)} className="px-3 py-2.5 border border-slate-300 rounded-xl text-sm bg-white">
+                <option value="All">All Statuses</option>
+                <option value="Published">Published</option>
+                <option value="Ongoing">Ongoing</option>
+                <option value="Completed">Completed</option>
+              </select>
+            </div>
+          </div>
+
+          {/* Event Cards Grid */}
+          {filteredEvents.length === 0 ? (
+            <div className="bg-white p-12 rounded-2xl border border-slate-200 text-center">
+              <i data-lucide="search-x" className="w-12 h-12 text-slate-300 mx-auto mb-3"></i>
+              <h3 className="text-lg font-bold text-slate-800">No events found</h3>
+              <p className="text-xs text-slate-500 mt-1">Try clearing your search query or filters.</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              {filteredEvents.map(ev => {
+                const isReg = registrations.some(r => r.event_id === ev.id && (r.user_id === currentUser?.id || r.email === currentUser?.email) && r.status !== 'Cancelled');
+                return (
+                  <div key={ev.id} className="bg-white rounded-2xl border border-slate-200/80 overflow-hidden shadow-sm hover:shadow-md transition flex flex-col justify-between">
+                    <div>
+                      <div className="relative h-44 overflow-hidden bg-slate-100">
+                        <img src={ev.poster} alt={ev.event_name} className="w-full h-full object-cover" />
+                        <span className="absolute top-3 right-3 px-2.5 py-1 bg-white/90 text-emerald-800 font-bold text-[11px] rounded-full">
+                          {categories.find(c => c.id === ev.category_id)?.name}
+                        </span>
+                      </div>
+                      <div className="p-5">
+                        <h3 className="text-base font-bold text-slate-900 mb-1 line-clamp-1">{ev.event_name}</h3>
+                        <p className="text-xs text-slate-500 line-clamp-2 mb-4">{ev.description}</p>
+                        
+                        <div className="space-y-1.5 text-xs text-slate-600 border-t border-slate-100 pt-3">
+                          <div>📅 <b>Date:</b> {ev.date}</div>
+                          <div>📍 <b>Venue:</b> {venues.find(v => v.id === ev.venue_id)?.name || 'Campus Venue'}</div>
+                          <div>Seats available: <b>{ev.max_participants - registrations.filter(r => r.event_id === ev.id).length}</b> / {ev.max_participants}</div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="p-5 pt-0">
+                      <button onClick={() => navigateTo('event-details', ev.id)} className={`w-full py-2.5 rounded-xl text-xs font-semibold transition ${isReg ? 'bg-emerald-100 text-emerald-800 border border-emerald-300' : 'bg-emerald-600 hover:bg-emerald-700 text-white'}`}>
+                        {isReg ? 'Registered • View Details' : 'View Details & Register'}
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    // --- EVENT DETAILS VIEW ---
+    function EventDetailsView({ eventId, events, categories, venues, registrations, feedbacks, currentUser, navigateTo, setRegistrations, setFeedbacks, showToast }) {
+      const ev = events.find(e => e.id === eventId) || events[0];
+      const isReg = registrations.some(r => r.event_id === ev.id && (r.user_id === currentUser?.id || r.email === currentUser?.email) && r.status !== 'Cancelled');
+      const category = categories.find(c => c.id === ev.category_id);
+      const venue = venues.find(v => v.id === ev.venue_id);
+      const eventRegs = registrations.filter(r => r.event_id === ev.id && r.status !== 'Cancelled');
+      const seatsLeft = ev.max_participants - eventRegs.length;
+
+      const handleRegister = () => {
+        if (!currentUser) {
+          showToast('Please login to register for events.', 'error');
+          navigateTo('login');
+          return;
+        }
+        const newReg = {
+          id: Date.now(),
+          user_id: currentUser.id,
+          user_name: currentUser.name,
+          register_number: currentUser.register_number || 'REG-2026',
+          email: currentUser.email,
+          department: currentUser.department || 'General',
+          event_id: ev.id,
+          event_name: ev.event_name,
+          registration_date: new Date().toISOString().replace('T', ' ').substring(0, 16),
+          status: 'Registered'
+        };
+        setRegistrations(prev => [newReg, ...prev]);
+        showToast(`Successfully registered for ${ev.event_name}!`, 'success');
+      };
+
+      const handleCancelReg = () => {
+        setRegistrations(prev => prev.map(r => (r.event_id === ev.id && (r.user_id === currentUser?.id || r.email === currentUser?.email)) ? {...r, status: 'Cancelled'} : r));
+        showToast('Registration cancelled.', 'info');
+      };
+
+      return (
+        <div className="max-w-5xl mx-auto px-4 py-8">
+          <button onClick={() => navigateTo('browse-events')} className="text-xs font-semibold text-slate-500 hover:text-slate-800 flex items-center space-x-1 mb-4">
+            <i data-lucide="arrow-left" className="w-4 h-4"></i>
+            <span>Back to Browse Events</span>
+          </button>
+
+          <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
+            <div className="h-72 w-full relative">
+              <img src={ev.poster} className="w-full h-full object-cover" />
+              <span className="absolute top-4 left-4 px-3 py-1 bg-white/90 font-bold text-xs rounded-full text-emerald-800">
+                {category?.name}
+              </span>
+            </div>
+
+            <div className="p-8">
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-6 border-b border-slate-100">
+                <div>
+                  <h1 className="text-3xl font-extrabold text-slate-900">{ev.event_name}</h1>
+                  <p className="text-sm text-slate-500 mt-1">Organized by <span className="font-semibold text-slate-700">{ev.organizer}</span></p>
+                </div>
+
+                <div>
+                  {isReg ? (
+                    <button onClick={handleCancelReg} className="px-6 py-3 bg-red-50 text-red-600 hover:bg-red-100 font-semibold rounded-xl text-sm border border-red-200 transition">
+                      Cancel Registration
+                    </button>
+                  ) : (
+                    <button 
+                      onClick={handleRegister}
+                      disabled={seatsLeft <= 0}
+                      className="px-6 py-3 bg-emerald-600 hover:bg-emerald-700 disabled:bg-slate-300 text-white font-semibold rounded-xl text-sm shadow-md transition"
+                    >
+                      {seatsLeft <= 0 ? 'Event Full' : 'Register Now'}
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 py-6 border-b border-slate-100 text-xs">
+                <div>
+                  <span className="text-slate-400 block">Date & Time</span>
+                  <span className="font-bold text-slate-800 text-sm">{ev.date} • {ev.start_time}</span>
+                </div>
+                <div>
+                  <span className="text-slate-400 block">Venue Location</span>
+                  <span className="font-bold text-slate-800 text-sm">{venue?.name}</span>
+                </div>
+                <div>
+                  <span className="text-slate-400 block">Capacity Seats</span>
+                  <span className="font-bold text-slate-800 text-sm">{seatsLeft} seats left</span>
+                </div>
+                <div>
+                  <span className="text-slate-400 block">Registration Deadline</span>
+                  <span className="font-bold text-slate-800 text-sm">{ev.registration_deadline.replace('T', ' ')}</span>
+                </div>
+              </div>
+
+              <div className="py-6">
+                <h3 className="text-lg font-bold text-slate-900 mb-2">Event Overview</h3>
+                <p className="text-slate-600 text-sm leading-relaxed">{ev.description}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    // --- MY REGISTRATIONS VIEW ---
+    function MyRegistrationsView({ currentUser, registrations, setRegistrations, events, navigateTo, showToast }) {
+      const myRegs = registrations.filter(r => r.user_id === currentUser?.id || r.email === currentUser?.email);
+
+      return (
+        <div className="max-w-6xl mx-auto px-4 py-8">
+          <h1 className="text-2xl font-bold text-slate-900 mb-6">My Event Registrations</h1>
+
+          {myRegs.length === 0 ? (
+            <div className="bg-white p-12 rounded-2xl border border-slate-200 text-center">
+              <p className="text-sm font-semibold text-slate-700">No active registrations found</p>
+              <button onClick={() => navigateTo('browse-events')} className="mt-4 px-4 py-2 bg-emerald-600 text-white rounded-xl text-xs font-semibold">Browse Events</button>
+            </div>
+          ) : (
+            <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
+              <table className="w-full text-left border-collapse text-xs">
+                <thead>
+                  <tr className="bg-slate-50 border-b border-slate-200 text-slate-500 font-semibold uppercase">
+                    <th className="p-4">Reg ID</th>
+                    <th className="p-4">Event Name</th>
+                    <th className="p-4">Date</th>
+                    <th className="p-4">Registration Date</th>
+                    <th className="p-4">Status</th>
+                    <th className="p-4">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100 text-slate-700">
+                  {myRegs.map(reg => {
+                    const ev = events.find(e => e.id === reg.event_id);
+                    return (
+                      <tr key={reg.id} className="hover:bg-slate-50">
+                        <td className="p-4 font-mono font-bold text-slate-900">#REG-{reg.id}</td>
+                        <td className="p-4 font-bold text-slate-900">{reg.event_name}</td>
+                        <td className="p-4">{ev?.date || 'Upcoming'}</td>
+                        <td className="p-4 text-slate-500">{reg.registration_date}</td>
+                        <td className="p-4">
+                          <span className={`px-2.5 py-1 font-bold rounded-full text-[10px] ${
+                            reg.status === 'Approved' ? 'bg-emerald-100 text-emerald-800' :
+                            reg.status === 'Registered' ? 'bg-blue-100 text-blue-800' :
+                            reg.status === 'Rejected' ? 'bg-red-100 text-red-800' :
+                            'bg-slate-100 text-slate-600'
+                          }`}>
+                            {reg.status}
+                          </span>
+                        </td>
+                        <td className="p-4">
+                          {reg.status !== 'Cancelled' && (
+                            <button onClick={() => {
+                              setRegistrations(prev => prev.map(r => r.id === reg.id ? {...r, status: 'Cancelled'} : r));
+                              showToast('Registration cancelled', 'info');
+                            }} className="text-red-600 font-semibold hover:underline">
+                              Cancel
+                            </button>
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    // --- STUDENT CALENDAR VIEW ---
+    function StudentCalendarView({ events, registrations, currentUser, navigateTo }) {
+      return (
+        <div className="max-w-5xl mx-auto px-4 py-8">
+          <h1 className="text-2xl font-bold text-slate-900 mb-2">Campus Event Calendar</h1>
+          <p className="text-xs text-slate-500 mb-6">Interactive view of upcoming campus events and your registered schedules</p>
+
+          <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+            <div className="grid grid-cols-7 gap-2 text-center font-bold text-xs text-slate-400 uppercase mb-4">
+              <span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span><span>Sun</span>
+            </div>
+            <div className="grid grid-cols-7 gap-2 text-xs">
+              {Array.from({ length: 31 }, (_, i) => {
+                const dayNum = i + 1;
+                const dayDateStr = `2026-10-${dayNum < 10 ? '0' + dayNum : dayNum}`;
+                const dayEvents = events.filter(e => e.date === dayDateStr);
+                return (
+                  <div key={i} className="min-h-[90px] p-2 bg-slate-50 rounded-xl border border-slate-200/60 flex flex-col justify-between">
+                    <span className="font-bold text-slate-700">{dayNum}</span>
+                    <div className="space-y-1">
+                      {dayEvents.map(ev => (
+                        <div key={ev.id} onClick={() => navigateTo('event-details', ev.id)} className="p-1 bg-emerald-600 text-white rounded text-[9px] font-semibold truncate cursor-pointer hover:bg-emerald-700">
+                          {ev.event_name}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    // --- FEEDBACK VIEW ---
+    function FeedbackView({ currentUser, registrations, feedbacks, setFeedbacks, events, showToast }) {
+      const [selectedEventId, setSelectedEventId] = useState('');
+      const [rating, setRating] = useState(5);
+      const [comment, setComment] = useState('');
+
+      const handleSubmit = (e) => {
+        e.preventDefault();
+        if (!selectedEventId || !comment) {
+          showToast('Please complete all feedback fields.', 'error');
+          return;
+        }
+        const ev = events.find(e => e.id === parseInt(selectedEventId));
+        const newFb = {
+          id: Date.now(),
+          user_id: currentUser.id,
+          user_name: currentUser.name,
+          event_id: ev.id,
+          event_name: ev.event_name,
+          rating: parseInt(rating),
+          comment,
+          date: new Date().toISOString().split('T')[0]
+        };
+        setFeedbacks(prev => [newFb, ...prev]);
+        setComment('');
+        showToast('Thank you! Feedback submitted successfully.', 'success');
+      };
+
+      return (
+        <div className="max-w-4xl mx-auto px-4 py-8">
+          <h1 className="text-2xl font-bold text-slate-900 mb-6">Event Feedback & Reviews</h1>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+              <h3 className="font-bold text-slate-900 mb-4">Submit New Event Feedback</h3>
+              <form onSubmit={handleSubmit} className="space-y-4 text-xs">
+                <div>
+                  <label className="block font-semibold text-slate-700 mb-1">Select Event Attended</label>
+                  <select value={selectedEventId} onChange={e => setSelectedEventId(e.target.value)} className="w-full p-2.5 border border-slate-300 rounded-xl bg-white">
+                    <option value="">-- Choose Event --</option>
+                    {events.map(e => <option key={e.id} value={e.id}>{e.event_name}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <label className="block font-semibold text-slate-700 mb-1">Rating (1 to 5 Stars)</label>
+                  <select value={rating} onChange={e => setRating(e.target.value)} className="w-full p-2.5 border border-slate-300 rounded-xl bg-white">
+                    <option value="5">⭐⭐⭐⭐⭐ 5 - Excellent</option>
+                    <option value="4">⭐⭐⭐⭐ 4 - Very Good</option>
+                    <option value="3">⭐⭐⭐ 3 - Average</option>
+                    <option value="2">⭐⭐ 2 - Poor</option>
+                    <option value="1">⭐ 1 - Very Poor</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block font-semibold text-slate-700 mb-1">Your Comments & Suggestions</label>
+                  <textarea rows="4" value={comment} onChange={e => setComment(e.target.value)} className="w-full p-2.5 border border-slate-300 rounded-xl" placeholder="Share your experience..."></textarea>
+                </div>
+                <button type="submit" className="w-full py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-xl transition">
+                  Submit Feedback
+                </button>
+              </form>
+            </div>
+
+            <div className="space-y-4">
+              <h3 className="font-bold text-slate-900">Your Submitted Feedback</h3>
+              {feedbacks.map(fb => (
+                <div key={fb.id} className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm text-xs">
+                  <div className="flex justify-between font-bold text-slate-900 mb-1">
+                    <span>{fb.event_name}</span>
+                    <span className="text-amber-500">{'★'.repeat(fb.rating)}</span>
+                  </div>
+                  <p className="text-slate-600 mb-2">{fb.comment}</p>
+                  <span className="text-slate-400 text-[10px]">{fb.date}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    // --- PROFILE VIEW ---
+    function ProfileView({ currentUser, setCurrentUser, showToast }) {
+      const [name, setName] = useState(currentUser?.name || '');
+      const [phone, setPhone] = useState(currentUser?.phone || '');
+      const [department, setDepartment] = useState(currentUser?.department || '');
+
+      const handleSave = (e) => {
+        e.preventDefault();
+        setCurrentUser(prev => ({ ...prev, name, phone, department }));
+        showToast('Profile updated successfully!', 'success');
+      };
+
+      return (
+        <div className="max-w-xl mx-auto px-4 py-8">
+          <div className="bg-white p-8 rounded-2xl border border-slate-200 shadow-sm">
+            <h2 className="text-2xl font-bold text-slate-900 mb-6">Student Profile Settings</h2>
+            <form onSubmit={handleSave} className="space-y-4 text-xs">
+              <div>
+                <label className="block font-semibold text-slate-700 mb-1">Full Name</label>
+                <input type="text" value={name} onChange={e => setName(e.target.value)} className="w-full p-2.5 border border-slate-300 rounded-xl text-sm" />
+              </div>
+              <div>
+                <label className="block font-semibold text-slate-700 mb-1">Register Number (Read-only)</label>
+                <input type="text" value={currentUser?.register_number || 'CS2026-0892'} disabled className="w-full p-2.5 bg-slate-100 border border-slate-300 rounded-xl text-sm text-slate-500" />
+              </div>
+              <div>
+                <label className="block font-semibold text-slate-700 mb-1">Department</label>
+                <input type="text" value={department} onChange={e => setDepartment(e.target.value)} className="w-full p-2.5 border border-slate-300 rounded-xl text-sm" />
+              </div>
+              <div>
+                <label className="block font-semibold text-slate-700 mb-1">Phone Number</label>
+                <input type="text" value={phone} onChange={e => setPhone(e.target.value)} className="w-full p-2.5 border border-slate-300 rounded-xl text-sm" />
+              </div>
+              <button type="submit" className="w-full py-2.5 bg-emerald-600 text-white font-semibold rounded-xl text-sm shadow">
+                Save Profile Changes
+              </button>
+            </form>
+          </div>
+        </div>
+      );
+    }
+
+    // --- ADMIN DASHBOARD VIEW ---
+    function AdminDashboardView({ events, registrations, students, categories, navigateTo, setRegistrations, showToast }) {
+      const pendingRegs = registrations.filter(r => r.status === 'Pending' || r.status === 'Registered');
+
+      return (
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <div className="flex justify-between items-center mb-8 pb-4 border-b border-slate-200">
+            <div>
+              <span className="px-2.5 py-1 bg-emerald-100 text-emerald-800 font-bold text-xs rounded-full uppercase tracking-wider">Admin Operations</span>
+              <h1 className="text-2xl font-bold text-slate-900 mt-1">Campus Event Analytics & Management</h1>
+            </div>
+            <button onClick={() => navigateTo('admin-events')} className="px-4 py-2 bg-emerald-600 text-white text-xs font-semibold rounded-xl">
+              + Manage Events
+            </button>
+          </div>
+
+          {/* Admin KPI Stats */}
+          <div className="grid grid-cols-2 md:grid-cols-6 gap-4 mb-8">
+            <div className="bg-white p-4 rounded-xl border border-slate-200 text-center">
+              <div className="text-2xl font-extrabold text-slate-900">{events.length}</div>
+              <div className="text-[10px] font-bold text-slate-400 uppercase">Total Events</div>
+            </div>
+            <div className="bg-white p-4 rounded-xl border border-slate-200 text-center">
+              <div className="text-2xl font-extrabold text-emerald-600">{events.filter(e => e.status === 'Published').length}</div>
+              <div className="text-[10px] font-bold text-slate-400 uppercase">Upcoming</div>
+            </div>
+            <div className="bg-white p-4 rounded-xl border border-slate-200 text-center">
+              <div className="text-2xl font-extrabold text-blue-600">{students.length}</div>
+              <div className="text-[10px] font-bold text-slate-400 uppercase">Total Students</div>
+            </div>
+            <div className="bg-white p-4 rounded-xl border border-slate-200 text-center">
+              <div className="text-2xl font-extrabold text-indigo-600">{registrations.length}</div>
+              <div className="text-[10px] font-bold text-slate-400 uppercase">Registrations</div>
+            </div>
+            <div className="bg-white p-4 rounded-xl border border-slate-200 text-center">
+              <div className="text-2xl font-extrabold text-amber-500">{pendingRegs.length}</div>
+              <div className="text-[10px] font-bold text-slate-400 uppercase">Pending Approvals</div>
+            </div>
+            <div className="bg-white p-4 rounded-xl border border-slate-200 text-center">
+              <div className="text-2xl font-extrabold text-purple-600">{categories.length}</div>
+              <div className="text-[10px] font-bold text-slate-400 uppercase">Categories</div>
+            </div>
+          </div>
+
+          {/* Charts Row */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+            <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+              <h3 className="text-sm font-bold text-slate-900 mb-4">Registration Velocity Over Time</h3>
+              <div className="h-44 flex items-end justify-between space-x-2 pt-4 px-2">
+                {[35, 50, 75, 110, 95, 140, 180].map((h, idx) => (
+                  <div key={idx} className="flex-1 flex flex-col items-center gap-1">
+                    <div className="w-full bg-emerald-500 rounded-t-lg transition-all" style={{ height: `${h / 2}px` }}></div>
+                    <span className="text-[10px] text-slate-400">Day {idx + 1}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+              <h3 className="text-sm font-bold text-slate-900 mb-4">Events Distribution by Category</h3>
+              <div className="space-y-3 text-xs">
+                {categories.map(cat => {
+                  const count = events.filter(e => e.category_id === cat.id).length;
+                  const pct = (count / Math.max(1, events.length)) * 100;
+                  return (
+                    <div key={cat.id}>
+                      <div className="flex justify-between font-semibold text-slate-700 mb-1">
+                        <span>{cat.name}</span>
+                        <span>{count} events</span>
+                      </div>
+                      <div className="w-full h-2 bg-slate-100 rounded-full overflow-hidden">
+                        <div className="h-full bg-emerald-600 rounded-full" style={{ width: `${pct}%` }}></div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    // --- ADMIN EVENTS CRUD VIEW ---
+    function AdminEventsView({ events, setEvents, categories, venues, navigateTo, showToast, setConfirmModal }) {
+      const [showModal, setShowModal] = useState(false);
+      const [editingEvent, setEditingEvent] = useState(null);
+
+      const [formData, setFormData] = useState({
+        event_name: '',
+        description: '',
+        category_id: 1,
+        date: '2026-10-25',
+        start_time: '10:00',
+        end_time: '17:00',
+        venue_id: 1,
+        organizer: 'Campus Board',
+        max_participants: 100,
+        registration_deadline: '2026-10-24T23:59',
+        poster: 'https://images.unsplash.com/photo-1504384308090-c894fdcc538d?auto=format&fit=crop&w=1200&q=80',
+        status: 'Published'
+      });
+
+      const handleSave = (e) => {
+        e.preventDefault();
+        if (editingEvent) {
+          setEvents(prev => prev.map(ev => ev.id === editingEvent.id ? { ...ev, ...formData } : ev));
+          showToast('Event updated successfully!', 'success');
+        } else {
+          const newEv = { id: Date.now(), ...formData };
+          setEvents(prev => [newEv, ...prev]);
+          showToast('New event created!', 'success');
+        }
+        setShowModal(false);
+      };
+
+      const handleDelete = (id) => {
+        setConfirmModal({
+          title: "Delete Event",
+          message: "Are you sure you want to delete this event? All student registrations will be removed.",
+          onConfirm: () => {
+            setEvents(prev => prev.filter(e => e.id !== id));
+            showToast('Event deleted.', 'info');
+          }
+        });
+      };
+
+      return (
+        <div className="max-w-7xl mx-auto px-4 py-8">
+          <div className="flex justify-between items-center mb-6">
+            <h1 className="text-2xl font-bold text-slate-900">Event Management</h1>
+            <button onClick={() => { setEditingEvent(null); setShowModal(true); }} className="px-4 py-2 bg-emerald-600 text-white rounded-xl text-xs font-semibold shadow">
+              + Create Event
+            </button>
+          </div>
+
+          <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
+            <table className="w-full text-left text-xs border-collapse">
+              <thead>
+                <tr className="bg-slate-50 border-b border-slate-200 text-slate-500 font-semibold uppercase">
+                  <th className="p-4">Event Name</th>
+                  <th className="p-4">Category</th>
+                  <th className="p-4">Date</th>
+                  <th className="p-4">Venue</th>
+                  <th className="p-4">Status</th>
+                  <th className="p-4">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {events.map(ev => (
+                  <tr key={ev.id} className="hover:bg-slate-50">
+                    <td className="p-4 font-bold text-slate-900">{ev.event_name}</td>
+                    <td className="p-4">{categories.find(c => c.id === ev.category_id)?.name}</td>
+                    <td className="p-4">{ev.date}</td>
+                    <td className="p-4">{venues.find(v => v.id === ev.venue_id)?.name}</td>
+                    <td className="p-4">
+                      <span className="px-2 py-1 font-bold rounded-full text-[10px] bg-emerald-100 text-emerald-800">
+                        {ev.status}
+                      </span>
+                    </td>
+                    <td className="p-4 space-x-2">
+                      <button onClick={() => { setEditingEvent(ev); setFormData(ev); setShowModal(true); }} className="text-emerald-600 font-semibold hover:underline">Edit</button>
+                      <button onClick={() => handleDelete(ev.id)} className="text-red-600 font-semibold hover:underline">Delete</button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Modal Form */}
+          {showModal && (
+            <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+              <div className="bg-white rounded-2xl p-6 max-w-lg w-full max-h-[90vh] overflow-y-auto shadow-2xl">
+                <h3 className="text-lg font-bold mb-4 text-slate-900">{editingEvent ? 'Edit Event' : 'Create New Event'}</h3>
+                <form onSubmit={handleSave} className="space-y-3 text-xs">
+                  <div>
+                    <label className="block font-semibold mb-1">Event Name</label>
+                    <input type="text" value={formData.event_name} onChange={e => setFormData({...formData, event_name: e.target.value})} required className="w-full p-2 border rounded-xl" />
+                  </div>
+                  <div>
+                    <label className="block font-semibold mb-1">Description</label>
+                    <textarea value={formData.description} onChange={e => setFormData({...formData, description: e.target.value})} required className="w-full p-2 border rounded-xl" rows="3"></textarea>
+                  </div>
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <label className="block font-semibold mb-1">Date</label>
+                      <input type="date" value={formData.date} onChange={e => setFormData({...formData, date: e.target.value})} required className="w-full p-2 border rounded-xl" />
+                    </div>
+                    <div>
+                      <label className="block font-semibold mb-1">Max Capacity</label>
+                      <input type="number" value={formData.max_participants} onChange={e => setFormData({...formData, max_participants: parseInt(e.target.value)})} required className="w-full p-2 border rounded-xl" />
+                    </div>
+                  </div>
+                  <div className="flex justify-end space-x-2 pt-4">
+                    <button type="button" onClick={() => setShowModal(false)} className="px-4 py-2 bg-slate-100 rounded-xl font-semibold">Cancel</button>
+                    <button type="submit" className="px-4 py-2 bg-emerald-600 text-white rounded-xl font-semibold">Save Event</button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    // --- ADMIN REGISTRATIONS VIEW ---
+    function AdminRegistrationsView({ registrations, setRegistrations, events, showToast }) {
+      const handleStatusChange = (id, newStatus) => {
+        setRegistrations(prev => prev.map(r => r.id === id ? { ...r, status: newStatus } : r));
+        showToast(`Registration status updated to ${newStatus}`, 'success');
+      };
+
+      return (
+        <div className="max-w-7xl mx-auto px-4 py-8">
+          <h1 className="text-2xl font-bold text-slate-900 mb-6">Student Registrations Management</h1>
+          <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
+            <table className="w-full text-left text-xs border-collapse">
+              <thead>
+                <tr className="bg-slate-50 border-b border-slate-200 text-slate-500 font-semibold uppercase">
+                  <th className="p-4">Reg ID</th>
+                  <th className="p-4">Student Name</th>
+                  <th className="p-4">Register No</th>
+                  <th className="p-4">Event</th>
+                  <th className="p-4">Status</th>
+                  <th className="p-4">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {registrations.map(r => (
+                  <tr key={r.id} className="hover:bg-slate-50">
+                    <td className="p-4 font-mono font-bold">#REG-{r.id}</td>
+                    <td className="p-4 font-bold">{r.user_name}</td>
+                    <td className="p-4 font-mono text-slate-500">{r.register_number}</td>
+                    <td className="p-4">{r.event_name}</td>
+                    <td className="p-4">
+                      <span className={`px-2.5 py-1 font-bold rounded-full text-[10px] ${
+                        r.status === 'Approved' ? 'bg-emerald-100 text-emerald-800' :
+                        r.status === 'Rejected' ? 'bg-red-100 text-red-800' :
+                        'bg-blue-100 text-blue-800'
+                      }`}>
+                        {r.status}
+                      </span>
+                    </td>
+                    <td className="p-4 space-x-2">
+                      <button onClick={() => handleStatusChange(r.id, 'Approved')} className="text-emerald-600 font-semibold hover:underline">Approve</button>
+                      <button onClick={() => handleStatusChange(r.id, 'Rejected')} className="text-red-600 font-semibold hover:underline">Reject</button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      );
+    }
+
+    // --- ADMIN STUDENTS CRUD VIEW ---
+    function AdminStudentsView({ students, setStudents, showToast, setConfirmModal }) {
+      return (
+        <div className="max-w-7xl mx-auto px-4 py-8">
+          <h1 className="text-2xl font-bold text-slate-900 mb-6">Student Roster Management</h1>
+          <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
+            <table className="w-full text-left text-xs border-collapse">
+              <thead>
+                <tr className="bg-slate-50 border-b border-slate-200 text-slate-500 font-semibold uppercase">
+                  <th className="p-4">Name</th>
+                  <th className="p-4">Register Number</th>
+                  <th className="p-4">Email</th>
+                  <th className="p-4">Department</th>
+                  <th className="p-4">Year</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {students.map(s => (
+                  <tr key={s.id} className="hover:bg-slate-50">
+                    <td className="p-4 font-bold">{s.name}</td>
+                    <td className="p-4 font-mono">{s.register_number}</td>
+                    <td className="p-4 text-slate-500">{s.email}</td>
+                    <td className="p-4">{s.department}</td>
+                    <td className="p-4">{s.year}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      );
+    }
+
+    // --- ADMIN CATEGORIES VIEW ---
+    function AdminCategoriesView({ categories, setCategories, showToast }) {
+      return (
+        <div className="max-w-5xl mx-auto px-4 py-8">
+          <h1 className="text-2xl font-bold text-slate-900 mb-6">Event Categories</h1>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {categories.map(c => (
+              <div key={c.id} className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
+                <h3 className="font-bold text-slate-900 text-base">{c.name}</h3>
+                <p className="text-xs text-slate-500 mt-1">{c.description}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      );
+    }
+
+    // --- ADMIN VENUES VIEW ---
+    function AdminVenuesView({ venues, setVenues, showToast }) {
+      return (
+        <div className="max-w-5xl mx-auto px-4 py-8">
+          <h1 className="text-2xl font-bold text-slate-900 mb-6">Campus Venues</h1>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {venues.map(v => (
+              <div key={v.id} className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
+                <div>
+                  <h3 className="font-bold text-slate-900 text-base">{v.name}</h3>
+                  <p className="text-xs text-slate-500 mt-0.5">{v.location} • Capacity: {v.capacity}</p>
+                </div>
+                <span className={`px-2.5 py-1 text-[10px] font-bold rounded-full ${v.availability ? 'bg-emerald-100 text-emerald-800' : 'bg-red-100 text-red-800'}`}>
+                  {v.availability ? 'Available' : 'Booked'}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+      );
+    }
+
+    // --- ADMIN FEEDBACK VIEW ---
+    function AdminFeedbackView({ feedbacks }) {
+      return (
+        <div className="max-w-5xl mx-auto px-4 py-8">
+          <h1 className="text-2xl font-bold text-slate-900 mb-6">All Student Feedback</h1>
+          <div className="space-y-4">
+            {feedbacks.map(fb => (
+              <div key={fb.id} className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm text-xs">
+                <div className="flex justify-between font-bold text-slate-900 mb-1">
+                  <span>{fb.event_name} - <span className="text-slate-500">{fb.user_name}</span></span>
+                  <span className="text-amber-500">{'★'.repeat(fb.rating)}</span>
+                </div>
+                <p className="text-slate-600">{fb.comment}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      );
+    }
+
+    // Render React Root
+    ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+  </script>
+</body>
+</html>
